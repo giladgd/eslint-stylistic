@@ -28,7 +28,7 @@ export default createRule<RuleOptions, MessageIds>({
         },
         tabWidth: {
           type: 'integer',
-          minimum: 0,
+          minimum: 1,
         },
         overrides: {
           type: 'array',
