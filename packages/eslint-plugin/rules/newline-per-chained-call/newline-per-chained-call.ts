@@ -67,7 +67,6 @@ export default createRule<RuleOptions, MessageIds>({
                   ignoreChainWithDepth: {
                     type: 'integer',
                     minimum: 1,
-                    maximum: 10,
                   },
                 },
                 required: ['chainRoot', 'importedFrom', 'ignoreChainWithDepth'],
