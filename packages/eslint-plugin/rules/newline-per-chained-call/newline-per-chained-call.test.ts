@@ -50,7 +50,7 @@ run<RuleOptions, MessageIds>({
       options: [{
         ignoreChainWithDepth: 2,
         overrides: [{
-          chainRoot: ['select', ''],
+          chainRoot: ['select'],
           importedFrom: ['d3', 'd3/*'],
           ignoreChainWithDepth: 5,
         }],
@@ -495,6 +495,7 @@ run<RuleOptions, MessageIds>({
         overrides: [{
           chainRoot: '',
           importedFrom: 'd3',
+          treatDefaultAsNamespace: false,
           ignoreChainWithDepth: 5,
         }],
       }],

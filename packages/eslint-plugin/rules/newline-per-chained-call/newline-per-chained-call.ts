@@ -55,6 +55,10 @@ export default createRule<RuleOptions, MessageIds>({
                   },
                 ],
               },
+              treatDefaultAsNamespace: {
+                type: 'boolean',
+                default: true,
+              },
               maxLineLength: {
                 type: 'integer',
                 minimum: 1,
@@ -130,10 +134,14 @@ export default createRule<RuleOptions, MessageIds>({
       let member: Tree.MemberExpression | null = null
 
       while (current.type === 'MemberExpression' || current.type === 'CallExpression') {
-        if (current.type === 'MemberExpression')
+        if (current.type === 'MemberExpression') {
           member = current
-
-        current = skipChainExpression(current.type === 'MemberExpression' ? current.object : current.callee)
+          current = skipChainExpression(current.object)
+        }
+        else {
+          member = null
+          current = skipChainExpression(current.callee)
+        }
       }
 
       return current.type === 'Identifier'
@@ -141,7 +149,12 @@ export default createRule<RuleOptions, MessageIds>({
         : null
     }
 
-    function getImportBinding(root: ChainRoot): { chainRoot: string, importedFrom: string } | null {
+    function getImportBinding(root: ChainRoot): null | {
+      chainRoot: string
+      defaultNamespaceChainRoot: string | null
+      importedFrom: string
+      isDefault: boolean
+    } {
       let scope: Scope.Scope | null = sourceCode.getScope(root.identifier)
 
       while (scope) {
@@ -154,6 +167,7 @@ export default createRule<RuleOptions, MessageIds>({
             return null
 
           let chainRoot = ''
+          const isDefault = definition.node.type === 'ImportDefaultSpecifier'
 
           if (definition.node.type === 'ImportSpecifier') {
             chainRoot = definition.node.imported.type === 'Identifier'
@@ -173,7 +187,11 @@ export default createRule<RuleOptions, MessageIds>({
 
           return {
             chainRoot,
+            defaultNamespaceChainRoot: (isDefault && root.member != null)
+              ? getStaticPropertyName(root.member) ?? null
+              : null,
             importedFrom: definition.parent.source.value,
+            isDefault,
           }
         }
 
@@ -227,7 +245,16 @@ export default createRule<RuleOptions, MessageIds>({
         return undefined
 
       for (const override of overrides) {
-        if (!matchesValue(override.chainRoot, importBinding.chainRoot))
+        let chainRoot = importBinding.chainRoot
+
+        if (importBinding.isDefault && override.treatDefaultAsNamespace !== false) {
+          if (importBinding.defaultNamespaceChainRoot == null)
+            continue
+
+          chainRoot = importBinding.defaultNamespaceChainRoot
+        }
+
+        if (!matchesValue(override.chainRoot, chainRoot))
           continue
         else if (!matchesImportSource(override.importedFrom, importBinding.importedFrom))
           continue

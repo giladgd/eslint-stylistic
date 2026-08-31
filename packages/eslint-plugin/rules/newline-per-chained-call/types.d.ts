@@ -1,6 +1,6 @@
 /* GENERATED, DO NOT EDIT DIRECTLY */
 
-/* @checksum: Wve6MztGdL2Vcy_6qM0jbj1Ync1QXANKFKzt0aaaNFE */
+/* @checksum: Bz_3Ddi88HQYud0qPn2wl-cAj9kWUJOkUrNIQrV_Wng */
 
 export interface NewlinePerChainedCallSchema0 {
   ignoreChainWithDepth?: number
@@ -8,8 +8,9 @@ export interface NewlinePerChainedCallSchema0 {
   overrides?: {
     chainRoot: string | [string, ...string[]]
     importedFrom: string | [string, ...string[]]
-    ignoreChainWithDepth: number
+    treatDefaultAsNamespace?: boolean
     maxLineLength?: number
+    ignoreChainWithDepth: number
   }[]
 }
 
