@@ -60,6 +60,8 @@ This rule requires a newline after each call in a method chain or deep member ac
 This rule has an object option:
 
 - `"ignoreChainWithDepth"` (default: `2`) allows chains up to a specified depth.
+- `"tabWidth"` (default: `4`) sets the width of tabs when checking an override's `maxLineLength`.
+- `"overrides"` allows imported chains to use a different depth.
 
 ### ignoreChainWithDepth
 
@@ -123,6 +125,40 @@ obj
 ```
 
 :::
+
+### overrides
+
+Use `overrides` to allow a different chain depth for specific imports:
+
+::: correct
+
+```js
+/* eslint @stylistic/newline-per-chained-call: ["error", {
+    "ignoreChainWithDepth": 2,
+    "tabWidth": 4,
+    "overrides": [{
+        "chainRoot": "select",
+        "importedFrom": ["d3", "d3/*"],
+        "maxLineLength": 120,
+        "ignoreChainWithDepth": 5
+    }]
+}] */
+
+import { select } from "d3";
+
+const selection = select("body").selectAll("p").data([4, 8, 15]).enter();
+```
+
+:::
+
+`chainRoot` is the identifier at the root of the chain, and `importedFrom` is where it can be imported from. Both can be a string or an array of strings.
+To match a default import, use an empty string (`""`) in `chainRoot`.
+A trailing `/*` in `importedFrom` matches package subpaths. For example, `["d3", "d3/*"]` matches both `d3` and subpaths such as `d3/selection`.
+
+The first matching override's `ignoreChainWithDepth` replaces the rule-level value.
+
+When `maxLineLength` is set, the override only applies if the relevant source line is within that length.
+Tabs are expanded according to `tabWidth`.
 
 ## When Not To Use It
 

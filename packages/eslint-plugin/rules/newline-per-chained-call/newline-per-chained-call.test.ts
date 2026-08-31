@@ -35,6 +35,58 @@ run<RuleOptions, MessageIds>({
         ignoreChainWithDepth: 8,
       }],
     },
+    {
+      code: [
+        'import { select } from \'d3\';',
+        'import { select as selector } from \'d3/v4/core\';',
+        'import d3Default from \'d3\';',
+        'import * as d3Namespace from \'d3/v4\';',
+        'select(\'body\').selectAll(\'p\').data([1]);',
+        'selector(\'body\').selectAll(\'p\').data([1]);',
+        'd3Default.select(\'body\').selectAll(\'p\').data([1]);',
+        'd3Namespace.select(\'body\').selectAll(\'p\').data([1]);',
+        'select?.(\'body\')?.selectAll(\'p\')?.data([1]);',
+      ].join('\n'),
+      options: [{
+        ignoreChainWithDepth: 2,
+        overrides: [{
+          chainRoot: ['select', ''],
+          importedFrom: ['d3', 'd3/*'],
+          ignoreChainWithDepth: 5,
+        }],
+      }],
+    },
+    {
+      code: [
+        'import { select } from \'d3\';',
+        'select(\'body\').selectAll(\'p\').data([1]);',
+      ].join('\n'),
+      options: [{
+        ignoreChainWithDepth: 2,
+        overrides: [{
+          chainRoot: 'select',
+          importedFrom: 'd3',
+          ignoreChainWithDepth: 5,
+          maxLineLength: 40,
+        }],
+      }],
+    },
+    {
+      code: [
+        'import { select } from \'d3\';',
+        '  \tselect(\'body\').selectAll(\'p\').data([1]);',
+      ].join('\n'),
+      options: [{
+        ignoreChainWithDepth: 2,
+        tabWidth: 4,
+        overrides: [{
+          chainRoot: 'select',
+          importedFrom: 'd3',
+          ignoreChainWithDepth: 5,
+          maxLineLength: 44,
+        }],
+      }],
+    },
   ],
   invalid: [
     {
@@ -367,6 +419,155 @@ run<RuleOptions, MessageIds>({
         endLine: 1,
         endColumn: 35,
       }],
+    },
+    {
+      code: [
+        'import { select } from \'other-library\';',
+        'import { select as subpath } from \'d3/v4\';',
+        'select(\'body\').selectAll(\'p\').data([1]);',
+        'subpath(\'body\').selectAll(\'p\').data([1]);',
+      ].join('\n'),
+      output: [
+        'import { select } from \'other-library\';',
+        'import { select as subpath } from \'d3/v4\';',
+        'select(\'body\').selectAll(\'p\')',
+        '.data([1]);',
+        'subpath(\'body\').selectAll(\'p\')',
+        '.data([1]);',
+      ].join('\n'),
+      options: [{
+        ignoreChainWithDepth: 2,
+        overrides: [{
+          chainRoot: 'select',
+          importedFrom: 'd3',
+          ignoreChainWithDepth: 5,
+        }],
+      }],
+      errors: [
+        { messageId: 'expected', data: { callee: '.data' } },
+        { messageId: 'expected', data: { callee: '.data' } },
+      ],
+    },
+    {
+      code: [
+        'import { select } from \'d3\';',
+        'import { select as other } from \'d3-other\';',
+        'select(\'body\').selectAll(\'p\').data([1]);',
+        'other(\'body\').selectAll(\'p\').data([1]);',
+      ].join('\n'),
+      output: [
+        'import { select } from \'d3\';',
+        'import { select as other } from \'d3-other\';',
+        'select(\'body\').selectAll(\'p\')',
+        '.data([1]);',
+        'other(\'body\').selectAll(\'p\')',
+        '.data([1]);',
+      ].join('\n'),
+      options: [{
+        ignoreChainWithDepth: 2,
+        overrides: [{
+          chainRoot: 'select',
+          importedFrom: 'd3/*',
+          ignoreChainWithDepth: 5,
+        }],
+      }],
+      errors: [
+        { messageId: 'expected', data: { callee: '.data' } },
+        { messageId: 'expected', data: { callee: '.data' } },
+      ],
+    },
+    {
+      code: [
+        'import d3Default from \'d3\';',
+        'import * as d3Namespace from \'d3\';',
+        'd3Default.select(\'body\').selectAll(\'p\').data([1]);',
+        'd3Namespace.select(\'body\').selectAll(\'p\').data([1]);',
+      ].join('\n'),
+      output: [
+        'import d3Default from \'d3\';',
+        'import * as d3Namespace from \'d3\';',
+        'd3Default.select(\'body\').selectAll(\'p\').data([1]);',
+        'd3Namespace.select(\'body\').selectAll(\'p\')',
+        '.data([1]);',
+      ].join('\n'),
+      options: [{
+        ignoreChainWithDepth: 2,
+        overrides: [{
+          chainRoot: '',
+          importedFrom: 'd3',
+          ignoreChainWithDepth: 5,
+        }],
+      }],
+      errors: [{ messageId: 'expected', data: { callee: '.data' } }],
+    },
+    {
+      code: [
+        'import { select } from \'d3\';',
+        'function test(select) {',
+        '  return select(\'body\').selectAll(\'p\').data([1]);',
+        '}',
+      ].join('\n'),
+      output: [
+        'import { select } from \'d3\';',
+        'function test(select) {',
+        '  return select(\'body\').selectAll(\'p\')',
+        '.data([1]);',
+        '}',
+      ].join('\n'),
+      options: [{
+        ignoreChainWithDepth: 2,
+        overrides: [{
+          chainRoot: 'select',
+          importedFrom: 'd3',
+          ignoreChainWithDepth: 5,
+        }],
+      }],
+      errors: [{ messageId: 'expected', data: { callee: '.data' } }],
+    },
+    {
+      code: [
+        'import { select } from \'d3\';',
+        'select(\'body\').selectAll(\'p\').data([1]);',
+      ].join('\n'),
+      output: [
+        'import { select } from \'d3\';',
+        'select(\'body\').selectAll(\'p\')',
+        '.data([1]);',
+      ].join('\n'),
+      options: [{
+        ignoreChainWithDepth: 5,
+        overrides: [{
+          chainRoot: 'select',
+          importedFrom: 'd3',
+          ignoreChainWithDepth: 2,
+        }, {
+          chainRoot: 'select',
+          importedFrom: 'd3',
+          ignoreChainWithDepth: 5,
+        }],
+      }],
+      errors: [{ messageId: 'expected', data: { callee: '.data' } }],
+    },
+    {
+      code: [
+        'import { select } from \'d3\';',
+        'const selection = select(\'body\').selectAll(\'p\').data([1]);',
+      ].join('\n'),
+      output: [
+        'import { select } from \'d3\';',
+        'const selection = select(\'body\').selectAll(\'p\')',
+        '.data([1]);',
+      ].join('\n'),
+      options: [{
+        ignoreChainWithDepth: 2,
+        overrides: [{
+          chainRoot: 'select',
+          importedFrom: 'd3',
+          ignoreChainWithDepth: 5,
+          maxLineLength: 40,
+        }],
+      }],
+      errors: [{ messageId: 'expected', data: { callee: '.data' } }],
     }, // Optional chaining
     {
       code: 'obj?.foo1()?.foo2()?.foo3()',
