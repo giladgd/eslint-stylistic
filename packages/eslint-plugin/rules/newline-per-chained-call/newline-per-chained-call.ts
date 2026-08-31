@@ -148,6 +148,11 @@ export default createRule<RuleOptions, MessageIds>({
       return prefix + lines[0] + suffix
     }
 
+    /**
+     * Gets the root identifier and nearest member access of a chained call.
+     * @param node The chained member expression.
+     * @returns The chain root, or null if the root is not an identifier.
+     */
     function getChainRoot(node: Tree.MemberExpression): ChainRoot | null {
       let current = skipChainExpression(node)
       let member: Tree.MemberExpression | null = null
@@ -168,6 +173,11 @@ export default createRule<RuleOptions, MessageIds>({
         : null
     }
 
+    /**
+     * Resolves a chain root to its lexical import binding.
+     * @param root The chain root to resolve.
+     * @returns Information about the import binding, or null if it is not imported.
+     */
     function getImportBinding(root: ChainRoot): null | {
       chainRoot: string
       defaultNamespaceChainRoot: string | null
@@ -220,6 +230,12 @@ export default createRule<RuleOptions, MessageIds>({
       return null
     }
 
+    /**
+     * Checks whether a value matches a configured value or one of its alternatives.
+     * @param configured The configured value or values.
+     * @param value The value to check.
+     * @returns Whether the value matches.
+     */
     function matchesValue(configured: string | string[], value: string): boolean {
       if (Array.isArray(configured))
         return configured.includes(value)
@@ -227,6 +243,12 @@ export default createRule<RuleOptions, MessageIds>({
       return configured === value
     }
 
+    /**
+     * Checks an import source against exact values and trailing subpath wildcards.
+     * @param configured The configured import source or sources.
+     * @param source The import source to check.
+     * @returns Whether the import source matches.
+     */
     function matchesImportSource(configured: string | string[], source: string): boolean {
       if (Array.isArray(configured))
         return configured.some(value => matchesImportSource(value, source))
@@ -236,6 +258,11 @@ export default createRule<RuleOptions, MessageIds>({
         : source === configured
     }
 
+    /**
+     * Calculates a physical line's length using the configured tab stops.
+     * @param line The physical source line.
+     * @returns The expanded line length.
+     */
     function computeLineLength(line: string): number {
       let extraCharacterCount = 0
 
@@ -251,6 +278,11 @@ export default createRule<RuleOptions, MessageIds>({
       return Array.from(line).length + extraCharacterCount
     }
 
+    /**
+     * Finds the first override that matches a chained-call candidate.
+     * @param callee The candidate member expression.
+     * @returns The override's chain depth, or undefined when none matches.
+     */
     function resolveOverride(callee: Tree.MemberExpression): number | undefined {
       if (overrides == null || overrides.length === 0)
         return undefined
