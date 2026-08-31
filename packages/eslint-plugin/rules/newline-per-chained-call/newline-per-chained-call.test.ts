@@ -87,6 +87,20 @@ run<RuleOptions, MessageIds>({
         }],
       }],
     },
+    {
+      code: [
+        'import { select } from \'d3\';',
+        'select(\'body\').selectAll(\'p\').data([1]);',
+        'object.foo().bar().baz();',
+      ].join('\n'),
+      options: [{
+        ignoreChainWithDepth: 2,
+        overrides: [{
+          ignoreChainWithDepth: 5,
+          maxLineLength: 40,
+        }],
+      }],
+    },
   ],
   invalid: [
     {
@@ -569,6 +583,21 @@ run<RuleOptions, MessageIds>({
         }],
       }],
       errors: [{ messageId: 'expected', data: { callee: '.data' } }],
+    },
+    {
+      code: 'const longerValue = object.foo().bar().baz();',
+      output: [
+        'const longerValue = object.foo().bar()',
+        '.baz();',
+      ].join('\n'),
+      options: [{
+        ignoreChainWithDepth: 2,
+        overrides: [{
+          ignoreChainWithDepth: 5,
+          maxLineLength: 40,
+        }],
+      }],
+      errors: [{ messageId: 'expected', data: { callee: '.baz' } }],
     }, // Optional chaining
     {
       code: 'obj?.foo1()?.foo2()?.foo3()',

@@ -61,7 +61,7 @@ This rule has an object option:
 
 - `"ignoreChainWithDepth"` (default: `2`) allows chains up to a specified depth.
 - `"tabWidth"` (default: `4`) sets the width of tabs when checking an override's `maxLineLength`.
-- `"overrides"` allows imported chains to use a different depth.
+- `"overrides"` allows matching chains to use a different depth.
 
 ### ignoreChainWithDepth
 
@@ -152,13 +152,15 @@ const selection = select("body").selectAll("p").data([4, 8, 15]).enter();
 :::
 
 `chainRoot` is the identifier at the root of the chain, and `importedFrom` is where it can be imported from. Both can be a string or an array of strings.
-To match a default import, use an empty string (`""`) in `chainRoot`.
+When `treatDefaultAsNamespace` is set to `false`, matching a default imports is done using an empty string (`""`).
 A trailing `/*` in `importedFrom` matches package subpaths. For example, `["d3", "d3/*"]` matches both `d3` and subpaths such as `d3/selection`.
 
 The first matching override's `ignoreChainWithDepth` replaces the rule-level value.
 
 When `maxLineLength` is set, the override only applies if the relevant source line is within that length.
 Tabs are expanded according to `tabWidth`.
+
+To match all chains solely based on their line length, omit both `chainRoot` and `importedFrom` and set `maxLineLength`.
 
 ## When Not To Use It
 

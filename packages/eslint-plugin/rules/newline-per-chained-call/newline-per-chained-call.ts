@@ -33,44 +33,63 @@ export default createRule<RuleOptions, MessageIds>({
         overrides: {
           type: 'array',
           items: {
-            type: 'object',
-            properties: {
-              chainRoot: {
-                anyOf: [
-                  { type: 'string' },
-                  {
-                    type: 'array',
-                    items: { type: 'string' },
-                    minItems: 1,
+            anyOf: [
+              {
+                type: 'object',
+                properties: {
+                  chainRoot: {
+                    anyOf: [
+                      { type: 'string' },
+                      {
+                        type: 'array',
+                        items: { type: 'string' },
+                        minItems: 1,
+                      },
+                    ],
                   },
-                ],
-              },
-              importedFrom: {
-                anyOf: [
-                  { type: 'string' },
-                  {
-                    type: 'array',
-                    items: { type: 'string' },
-                    minItems: 1,
+                  importedFrom: {
+                    anyOf: [
+                      { type: 'string' },
+                      {
+                        type: 'array',
+                        items: { type: 'string' },
+                        minItems: 1,
+                      },
+                    ],
                   },
-                ],
+                  treatDefaultAsNamespace: {
+                    type: 'boolean',
+                  },
+                  maxLineLength: {
+                    type: 'integer',
+                    minimum: 1,
+                  },
+                  ignoreChainWithDepth: {
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 10,
+                  },
+                },
+                required: ['chainRoot', 'importedFrom', 'ignoreChainWithDepth'],
+                additionalProperties: false,
               },
-              treatDefaultAsNamespace: {
-                type: 'boolean',
-                default: true,
+              {
+                type: 'object',
+                properties: {
+                  maxLineLength: {
+                    type: 'integer',
+                    minimum: 1,
+                  },
+                  ignoreChainWithDepth: {
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 10,
+                  },
+                },
+                required: ['maxLineLength', 'ignoreChainWithDepth'],
+                additionalProperties: false,
               },
-              maxLineLength: {
-                type: 'integer',
-                minimum: 1,
-              },
-              ignoreChainWithDepth: {
-                type: 'integer',
-                minimum: 1,
-                maximum: 10,
-              },
-            },
-            required: ['chainRoot', 'importedFrom', 'ignoreChainWithDepth'],
-            additionalProperties: false,
+            ],
           },
         },
       },
@@ -236,28 +255,31 @@ export default createRule<RuleOptions, MessageIds>({
       if (overrides == null || overrides.length === 0)
         return undefined
 
-      const root = getChainRoot(callee)
-      if (root == null)
-        return undefined
-
-      const importBinding = getImportBinding(root)
-      if (importBinding == null)
-        return undefined
-
+      let importBinding: undefined | ReturnType<typeof getImportBinding>
       for (const override of overrides) {
-        let chainRoot = importBinding.chainRoot
+        if ('chainRoot' in override) {
+          if (importBinding === undefined) {
+            const root = getChainRoot(callee)
+            importBinding = root == null ? null : getImportBinding(root)
+          }
 
-        if (importBinding.isDefault && override.treatDefaultAsNamespace !== false) {
-          if (importBinding.defaultNamespaceChainRoot == null)
+          if (importBinding == null)
             continue
 
-          chainRoot = importBinding.defaultNamespaceChainRoot
-        }
+          let chainRoot = importBinding.chainRoot
 
-        if (!matchesValue(override.chainRoot, chainRoot))
-          continue
-        else if (!matchesImportSource(override.importedFrom, importBinding.importedFrom))
-          continue
+          if (importBinding.isDefault && override.treatDefaultAsNamespace !== false) {
+            if (importBinding.defaultNamespaceChainRoot == null)
+              continue
+
+            chainRoot = importBinding.defaultNamespaceChainRoot
+          }
+
+          if (!matchesValue(override.chainRoot, chainRoot))
+            continue
+          else if (!matchesImportSource(override.importedFrom, importBinding.importedFrom))
+            continue
+        }
 
         if (override.maxLineLength != null) {
           const line = sourceCode.lines[callee.property.loc.start.line - 1]
